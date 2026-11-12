@@ -131,11 +131,24 @@ test('save round-trip preserves durable progress and blocks unfinished encounter
 
 test('save validation rejects corrupt, oversized, poisoned, invalid and non-finite gameplay state', () => {
   for (const text of ['', '{', 'null', '[]', 'x'.repeat(50001), '{"version":999}']) assert.throws(() => restore(text));
-  const mutations = [s => { s.player.x = 2.5; }, s => { s.player.x = 999; }, s => { s.player.x = 0; },
+  const mutations = [s => { s.mapId = ['village']; }, s => { s.player.facing = ['up']; },
+    s => { s.mapId = {}; }, s => { s.player.facing = {}; }, s => { s.player.x = 2.5; }, s => { s.player.x = 999; }, s => { s.player.x = 0; },
     s => { s.player.facing = '__proto__'; }, s => { s.mapId = '__proto__'; }, s => { s.gold = Infinity; },
     s => { s.inventory.salve = -1; }, s => { s.party[0].hp = 9000; }, s => { s.party[0].maxHp = 9000; },
     s => { s.quest.stage = 3; }, s => { s.party = []; }, s => { s.mode = 'battle'; }];
   for (const mutate of mutations) { const state = createGame(); mutate(state); assert.throws(() => restore(JSON.stringify(state))); }
   const hostile = createGame(); hostile.party[0].name = '<script>alert(1)</script>'; hostile.extra = { __proto__: 'ignored' };
   const clean = restore(JSON.stringify(hostile)); assert.equal(clean.party[0].name, 'Ren'); assert.equal(clean.extra, undefined);
+});
+
+test('a valid level-cap save remains serializable after earning a battle reward',()=>{
+ const state=teamReady();
+ for(const member of state.party){
+  member.level=50;member.xp=1499;member.maxHp+=49*6;member.hp=member.maxHp;
+  member.maxChakra+=49*3;member.chakra=member.maxChakra;member.attack+=49*2;member.defense+=49;
+ }
+ const loaded=restore(serialize(state));
+ startBattle(loaded);win(loaded);
+ assert.ok(loaded.party.every(member=>member.level===50&&member.xp===1499));
+ assert.equal(restore(serialize(loaded)).quest.stage,4);
 });

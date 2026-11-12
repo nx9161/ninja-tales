@@ -142,6 +142,8 @@ function grantXp(member, amount) {
     member.xp -= member.level * 30; member.level++; member.maxHp += 6; member.maxChakra += 3;
     member.attack += 2; member.defense++; member.hp = member.maxHp; member.chakra = member.maxChakra;
   }
+  // Keep maximum-level rewards within the save reader's XP invariant.
+  if (member.level === 50) member.xp = Math.min(member.xp, 1499);
 }
 
 function finishBattle(state, outcome) {
@@ -242,11 +244,11 @@ export function restore(text) {
   try { value = JSON.parse(text); } catch { throw new Error('Save file is not valid JSON.'); }
   requireThat(plain(value) && value.version === SAVE_VERSION, 'Unsupported save version.');
   requireThat(value.mode === 'explore' && value.battle === null && value.dialogue === null, 'This save contains an unfinished encounter.');
-  requireThat(Object.hasOwn(MAPS, value.mapId), 'Unknown saved location.');
+  requireThat(typeof value.mapId === 'string' && Object.hasOwn(MAPS, value.mapId), 'Unknown saved location.');
   requireThat(plain(value.player), 'Invalid player position.');
   const map = MAPS[value.mapId];
   requireThat(integer(value.player.x, 0, map.width - 1) && integer(value.player.y, 0, map.height - 1)
-    && Object.hasOwn(DIRECTIONS, value.player.facing) && isWalkable(value.mapId, value.player.x, value.player.y), 'Saved position is blocked or invalid.');
+    && typeof value.player.facing === 'string' && Object.hasOwn(DIRECTIONS, value.player.facing) && isWalkable(value.mapId, value.player.x, value.player.y), 'Saved position is blocked or invalid.');
   requireThat(plain(value.quest) && integer(value.quest.stage, 0, 5), 'Invalid quest state.');
   requireThat(Array.isArray(value.party) && value.party.length >= 1 && value.party.length <= 4, 'Invalid party size.');
   const expectedIds = value.quest.stage >= 3 ? ['ren', 'aya'] : ['ren'];

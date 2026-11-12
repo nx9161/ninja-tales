@@ -101,6 +101,14 @@ test('complete the original quest through real controls, save, and reload', asyn
   await expect(page.locator('#game')).toHaveAttribute('data-mode', 'explore');
   await page.screenshot({path:testInfo.outputPath('village.png'),fullPage:true});
   await reachTraining(page);
+  const battleBounds=await page.locator('#battle-panel').boundingBox();
+  for(const button of await page.locator('#battle-actions button').all()){
+    const box=await button.boundingBox();
+    expect(box.y).toBeGreaterThanOrEqual(battleBounds.y);
+    expect(box.y+box.height).toBeLessThanOrEqual(battleBounds.y+battleBounds.height+1);
+    expect(box.x).toBeGreaterThanOrEqual(battleBounds.x);
+    expect(box.x+box.width).toBeLessThanOrEqual(battleBounds.x+battleBounds.width+1);
+  }
   await page.screenshot({path:testInfo.outputPath('battle.png'),fullPage:true});
   // Drive a real two-member turn order, including focus and guarding.
   await page.locator('[data-action="guard"]').click();
@@ -132,6 +140,8 @@ test('complete the original quest through real controls, save, and reload', asyn
 
 test('export and valid import round-trip, new adventure confirmation preserves save', async ({page})=>{
  await page.goto('/');
+ await page.keyboard.press('ArrowUp');
+ const saved=await location(page);
  await page.locator('#save-game').click();
  await openMenu(page);
  const downloadPromise=page.waitForEvent('download');
@@ -143,9 +153,18 @@ test('export and valid import round-trip, new adventure confirmation preserves s
  await expect(page.locator('#new-confirm')).toBeVisible();
  await page.locator('#cancel-new').click();
  await expect(page.locator('#new-confirm')).toBeHidden();
+ await page.locator('#new-game').click();
+ await page.locator('#confirm-new').click();
+ await expect(page.locator('#game')).toHaveAttribute('data-y','29');
+ await openMenu(page);
+ await page.locator('#load-game').click();
+ await expect(page.locator('#game')).toHaveAttribute('data-y',String(saved.y));
+ await expect(page.locator('#save-status')).toContainText('Device save loaded');
+ await openMenu(page);
  await page.locator('#import-save').setInputFiles(path);
  await expect(page.locator('#menu-panel')).toBeHidden();
  await expect(page.locator('#status')).toContainText('Backup imported');
+ await expect(page.locator('#save-status')).toContainText('not yet saved');
  await expect(page.locator('#game')).toHaveAttribute('data-stage','0');
 });
 
@@ -216,4 +235,16 @@ test('pointer cancellation and lost focus release movement', async ({ page }) =>
   const blurred = await location(page);
   await page.waitForTimeout(350);
   expect(await location(page)).toEqual(blurred);
+});
+
+test('trusted direction input moves once and releases',async({page,isMobile})=>{
+ await page.goto('/');
+ await expect(page.locator('#game')).toHaveAttribute('data-mode','explore');
+ const before=await location(page);
+ const control=page.locator('[data-dir="up"]');
+ if(isMobile)await control.tap();else await control.click();
+ const moved=await location(page);
+ expect(moved.y).toBe(before.y-1);
+ await page.waitForTimeout(400);
+ expect(await location(page)).toEqual(moved);
 });

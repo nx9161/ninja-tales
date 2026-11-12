@@ -16,6 +16,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'desktop-chromium', use: { viewport: { width: 1440, height: 1000 } } },
+    { name: 'small-phone-chromium', use: { viewport: {width:320,height:568}, isMobile:true, hasTouch:true, deviceScaleFactor:1 } },
     { name: 'mobile-chromium', use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
   ],
   webServer: {

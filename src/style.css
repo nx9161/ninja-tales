@@ -8,3 +8,5 @@
 @media(max-width:540px){.battle-scene{min-height:132px}.enemy-stage{right:3%;top:4px}.enemy-card .stat-row{font-size:7px}.battle-scene .enemy-card{padding:4px 7px}.enemy-card strong{font-size:9px}.enemy-card small{font-size:6px}.enemy-card .meter{height:4px}.ally-stage .combat-card{min-width:106px;padding:5px}.ally-stage{bottom:4px}.battle-scene canvas{width:36px;height:48px}.ally-stage canvas{width:45px;height:60px}}
 /* Keep movement targets usable with a fingertip at every breakpoint. */
 .dpad{grid-template-columns:44px 44px 44px;grid-template-rows:44px 44px 44px}
+
+@media(max-width:540px){.viewport.in-battle{min-height:390px}.battle-info #battle-log{max-height:56px;overflow-y:auto}}
